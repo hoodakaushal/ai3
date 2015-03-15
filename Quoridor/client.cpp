@@ -29,6 +29,7 @@ struct Move {
 	int type;
 	int row;
 	int column;
+	int player;
 };
 
 //Standard matrix - top left cell is 1,1
@@ -37,7 +38,7 @@ struct Board {
 
 	float time;
 
-	int myRow, myColumn, myWalls, oRow, oColumn, oWalls;
+	int row1, column1, walls1, row2, column2, walls2;
 
 	vector<Wall> walls;
 };
@@ -46,7 +47,8 @@ int getVNum(int row, int column, Board board) {
 	return board.rows * (row - 1) + column;
 }
 
-boost::adjacency_list boardToGraph(Board board) {
+//player specifies whose turn it is. Because the graph depends on the *opponent* of the *current* player.
+boost::adjacency_list boardToGraph(Board board, int player) {
 
 	//Create the graph
 	boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> bGraph(
@@ -104,8 +106,17 @@ boost::adjacency_list boardToGraph(Board board) {
 	// [h] [x]+[d]
 	// [g] [f]+[e]
 	// In this case, the code will go ahead and create an edge from h-b, but that doesn't seem right.
-	int i = board.oRow;
-	int j = board.oColumn;
+
+	int i,j = 0;
+	if(player==1){
+		i = board.row2;
+		j = board.column2;
+	}
+	else{
+		i = board.row1;
+		j = board.column1;
+	}
+
 	bool e1 = (boost::edge(getVNum(i, j - 1, board), getVNum(i, j, board),
 			bGraph)).second; //h-x
 	bool e2 = (boost::edge(getVNum(i, j, board), getVNum(i, j + 1, board),
@@ -164,23 +175,63 @@ boost::adjacency_list boardToGraph(Board board) {
 	return bGraph;
 }
 
-vector<Move> movegen(Board board) {
+//Finds a path from the given vertex to the edge to the board.
+// mode -> 1 = player1, find if path EXISTS
+// mode -> 11 = player1, find SHORTEST path
+// mode -> 2 = player2, find if path EXISTS
+// mode -> 22 = player2, find SHORTEST path
+int pathfinder(Board board, boost::adjacency_list bGraph, int vertex, int mode){
+
+}
+
+
+
+//The possible moves depend on which player it is.
+vector<Move> movegen(Board board, int player) {
 	vector<Move> moves;
 	moves.reserve(board.rows * board.columns + 4);
 
 }
 
+//Utility is ALWAYS calculated assuming that we are player1. If that's not the case, just reverse the sign.
 float utility(Board board) {
 	int score = 0;
 
-	score += board.rows - board.myRow;
-	score -= board.oRow - 1;
+	score += board.rows - board.row1;
+	score -= board.row2 - 1;
+
+	if(board.me == 2){
+		score = -1*score;
+	}
 
 	return score;
 }
 
-Board applyMove(Board board, Move move, int player){
-	//TODO
+Board applyMove(Board board, Move move){
+
+	if(move.type == 0){
+		if(move.player == 1){
+			board.row1 = move.row;
+			board.column1 = move.column;
+		}
+
+		else{
+			board.row2 = move.row;
+			board.column2 = move.column;
+		}
+	}
+
+	else{
+		Wall wall = Wall();
+		if(move.type == 1)
+			wall.horizontal = true;
+		else
+			wall.horizontal = false;
+		wall.row = move.row;
+		wall.column = move.column;
+		board.walls.push_back(wall);
+	}
+
 	return board;
 }
 
@@ -241,6 +292,13 @@ int main(int argc, char *argv[]) {
 	board.time = time_left;
 	board.me = player;
 
+	board.row1 = board.rows;
+	board.row2 = 1;
+	board.column1 = board.columns/2 + 1;
+	board.column2 = board.columns/2 + 1;
+	board.walls1 = board.walls;
+	board.walls2 = board.walls;
+
 	cout << "Player " << player << endl;
 	cout << "Time " << time_left << endl;
 	cout << "Board size " << N << "x" << M << " :" << K << endl;
@@ -257,9 +315,11 @@ int main(int argc, char *argv[]) {
 
 		//Get a move from player.
 //		cin>>m>>r>>c;
+
+		//This move had better have it's player set to the correct value.
 		Move move = minimax(board);
 
-		board = applyMove(board, move, 1);
+		board = applyMove(board, move);
 
 		m = move.type;
 		r = move.row;
@@ -294,8 +354,9 @@ int main(int argc, char *argv[]) {
 		omove.type = om;
 		omove.row = oro;
 		omove.column = oc;
+		omove.player = (board.me == 1) ? 2 : 1;
 
-		board = applyMove(board, move, 2)
+		board = applyMove(board, omove);
 
 		cout << om << " " << oro << " " << oc << " " << d << endl;
 		if (d == 1) {
@@ -313,7 +374,7 @@ int main(int argc, char *argv[]) {
 
 		Move move = minimax(board);
 
-		board = applyMove(board, move, 1);
+		board = applyMove(board, move);
 
 		m = move.type;
 		r = move.row;
