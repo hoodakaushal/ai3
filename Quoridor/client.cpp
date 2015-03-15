@@ -14,6 +14,9 @@
 #include "boost/graph/adjacency_list.hpp"
 
 using namespace std;
+
+typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> Graph;
+
 /* Complete the function below to print 1 integer which will be your next move 
  */
 int N, M, K, time_left, player;
@@ -22,6 +25,11 @@ struct Wall {
 	bool horizontal;
 	int row;
 	int column;
+	Wall(bool h, int r, int c){
+		horizontal = h;
+		row = r;
+		column = c;
+	}
 };
 
 struct Move {
@@ -30,6 +38,12 @@ struct Move {
 	int row;
 	int column;
 	int player;
+	Move(int t, int r, int c, int p){
+		type = t;
+		row = r;
+		column = c;
+		player = p;
+	}
 };
 
 //Standard matrix - top left cell is 1,1
@@ -48,11 +62,11 @@ int getVNum(int row, int column, Board board) {
 }
 
 //player specifies whose turn it is. Because the graph depends on the *opponent* of the *current* player.
-boost::adjacency_list boardToGraph(Board board, int player) {
+Graph boardToGraph(Board board, int player) {
 
+	 boost::property<boost::edge_weight_t, float> w = 1;
 	//Create the graph
-	boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> bGraph(
-			board.rows * board.columns);
+	Graph bGraph(board.rows * board.columns);
 
 	//Add horizontal edges
 	for (int i = 1; i <= board.rows; i++) {
@@ -180,7 +194,16 @@ boost::adjacency_list boardToGraph(Board board, int player) {
 // mode -> 11 = player1, find SHORTEST path
 // mode -> 2 = player2, find if path EXISTS
 // mode -> 22 = player2, find SHORTEST path
-int pathfinder(Board board, boost::adjacency_list bGraph, int vertex, int mode){
+int pathfinder(Board board, Graph bGraph, int vertex, int mode){
+	int dest = 1;
+
+	//Player 2 tries to go down.
+	if(mode/10 == 2){
+		dest = (board.rows-1)*board.columns + 1;
+	}
+
+	int shortestPath = INT_MAX;
+	bool found = false;
 
 }
 
@@ -190,7 +213,16 @@ int pathfinder(Board board, boost::adjacency_list bGraph, int vertex, int mode){
 vector<Move> movegen(Board board, int player) {
 	vector<Move> moves;
 	moves.reserve(board.rows * board.columns + 4);
+	Graph bGraph = boardToGraph(board, player);
 
+	//Moves for moving the pawn.
+	int v = getVNum(board.row1, board.column2, board);
+	if(player != 1)
+		v = getVNum(board.row2, board.column2, board);
+
+
+
+	return moves;
 }
 
 //Utility is ALWAYS calculated assuming that we are player1. If that's not the case, just reverse the sign.
@@ -222,13 +254,9 @@ Board applyMove(Board board, Move move){
 	}
 
 	else{
-		Wall wall = Wall();
-		if(move.type == 1)
-			wall.horizontal = true;
-		else
+		Wall wall = Wall(true, move.row, move.column);
+		if(move.type != 1)
 			wall.horizontal = false;
-		wall.row = move.row;
-		wall.column = move.column;
 		board.walls.push_back(wall);
 	}
 
@@ -350,10 +378,7 @@ int main(int argc, char *argv[]) {
 		recvBuff[n] = 0;
 		sscanf(recvBuff, "%d %d %d %d", &om, &oro, &oc, &d);
 
-		Move omove = Move();
-		omove.type = om;
-		omove.row = oro;
-		omove.column = oc;
+		Move omove = Move(om, oro, oc, 1);
 		omove.player = (board.me == 1) ? 2 : 1;
 
 		board = applyMove(board, omove);
