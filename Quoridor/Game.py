@@ -148,6 +148,7 @@ class Game:
         
     # TODO - if not a redo, clear redo hist
     def execute_turn(self, turn_string, is_redo=False, verify_legal=True):
+	flag=0
         """Given turn (move or wall) in official string notation,
         
         update internal state if move is valid and swap players
@@ -161,6 +162,7 @@ class Game:
                 pass
             print "winner:", current_player.name
         """
+	print is_redo
         if verify_legal:
             w_valid = self.turn_is_valid(turn_string, type="wall")
             m_valid = self.turn_is_valid(turn_string, type="move")
@@ -169,9 +171,24 @@ class Game:
                 #print "\twalled successfully"
                 self.add_wall(turn_string)
                 self.current_player.use_wall()
+		player_just_moved = self.current_player
+            	self.history.append(turn_string)
+            	self.next_player()
+            	if verify_legal:
+                	self.update_all([player_just_moved])
+		return 1
             elif m_valid:
                 #print "\tmoved successfully"
                 self.do_move(turn_string)
+	    elif is_redo:
+		print "here"
+		self.do_move(turn_string)
+		player_just_moved = self.current_player
+            	self.history.append(turn_string)
+            	self.next_player()
+            	if verify_legal:
+                	self.update_all([player_just_moved])
+	    	return 1
             else:
                 #print "execution failed"
                 #raise QuoridorException("invalid turn string given to execute_turn()")
@@ -186,6 +203,11 @@ class Game:
         
         # check for win
         if self.current_player.position in self.current_player.goal_positions:
+	    player_just_moved = self.current_player
+            self.history.append(turn_string)
+            self.next_player()
+            if verify_legal:
+                self.update_all([player_just_moved])
             return 2
         # no win - move on to next player
         else:
@@ -271,8 +293,8 @@ class Game:
         return self.graph.findPathDepthFirst(player.position, player.goal_positions, player.sortfunc) is not None
 
     def update_all(self, player_list=None):
-        for p in player_list:
-            self.update_shortest_path(p)
+        #for p in player_list:
+        #    self.update_shortest_path(p)
         self.update_legal_moves()
         self.update_legal_walls()
     
@@ -330,6 +352,11 @@ class Game:
         other_players = self.other_players
         cur_pt = player.position
         other_pts = [p.position for p in other_players]
+	for p in other_players:
+		for x in p.goal_positions:
+			if p.position == x:
+				print "here"
+				other_pts.remove(x)
         avail_pts_temp = self.graph.get_adj_nodes(cur_pt)
         for s in avail_pts_temp:
             if s in other_pts:
