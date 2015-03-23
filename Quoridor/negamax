@@ -1,10 +1,11 @@
 int inf,neginf,d ;
-int player,opp;
+// int player,opp;
 bool finish(Board board) {return ((board.row1 ==board.rows)&&(board.row2==1));}
 struct pv {Board state; Move mov; int value;};
 
-void reorder(Board state,vector<Move> moves,vector<pv> path,int d)        // simple reordering
-{ if (state==path[d].state) {moves.insert(moves.begin(),path[d].mov);}
+void reorder(Board state,vector<Move> moves,vector<pv> path,int a)        // simple reordering
+{    if(a==0){moves.insert(moves.begin(),path[0].mov);}
+     else if (state==path[a-1].state) {moves.insert(moves.begin(),path[a].mov);}
 
 }
 
@@ -27,8 +28,8 @@ vector<pv> NEGAMAX(Board node,int depth,int alpha,int beta,int color,vector<pv> 
     if(color==1) vector<Move> movelist = movegen(node,node.me);
     else vector<Move> movelist = movegen(node,3-(node.me));
     vector<pv> ans;
-    reorder(node,movelist,path,(d-depth));
-    for(int i=0;i++;i<movelist.size)
+    if (path.size() > (d-depth))reorder(node,movelist,path,(d-depth));
+    for(int i=0;i++;i<movelist.size())
        { Board child = applyMove(node,movelist[i]);
          if(finish(child)||depth==1)
             { int val = color*utility(child);
@@ -41,10 +42,10 @@ vector<pv> NEGAMAX(Board node,int depth,int alpha,int beta,int color,vector<pv> 
               break;}
 
 
-      else { //int gamma=(-1)*beta;int delta =(-1)*alpha;
+      else {
         vector<pv> p =  NEGAMAX(child, depth - 1, -beta ,-alpha , (-1)*color,path);
           p[0].value = (-1)*(p[0].value);
-          //int beta=(-1)*gamma;int alpha =(-1)*delta;
+
         if (bestValue<p[0].value) {bestMove=movelist[i];ans=p;bestState=child;}
         bestValue = max( bestValue, p[0].value );
         alpha = max( alpha, p[0].value );
@@ -63,7 +64,7 @@ vector<pv> NEGAMAX(Board node,int depth,int alpha,int beta,int color,vector<pv> 
 
 Move ITERATIVE-NEGAMAX(Board board) {
 d = 1;vector<pv> path;
-while ()           //while time's left
+while (d<4)           //while time's left
 {
 path = NEGAMAX(board,d,neginf,inf,1,path);
 Move m = (path[0]).mov;
