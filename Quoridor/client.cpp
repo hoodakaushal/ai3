@@ -13,6 +13,8 @@
 
 using namespace std;
 
+int progress = 0;
+
 //=======================================Graph stuff=========================================
 struct Wall {
 	bool horizontal;
@@ -101,7 +103,7 @@ public:
 	//Take row and column, return the vertex number.
 	//For example, 1,1 -> 1, 2,1 -> row_length + 1
 	int rc2v(int r, int c) {
-		return columns * (r - 1) + c;
+		return max(0, columns * (r - 1) + c);
 	}
 
 	//Take vertex number, return (row,column)
@@ -138,7 +140,7 @@ public:
 				bool e2 = checkEdge(rc2v(wall.row - 1, wall.column - 1), rc2v(wall.row, wall.column - 1));
 				bool e3 = wallsList[rc2v(wall.row, wall.column)] == 0;
 				if(debug)
-					cout<<"horizont "<<wall.row<<" "<<wall.column<<" "<<e1<<" "<<e2<<" "<<e3<<endl;
+//					cout<<"horizont "<<wall.row<<" "<<wall.column<<" "<<e1<<" "<<e2<<" "<<e3<<endl;
 
 				return e1 && e2 && e3;
 			} else {
@@ -146,7 +148,7 @@ public:
 				bool e2 = checkEdge(rc2v(wall.row, wall.column - 1), rc2v(wall.row, wall.column));
 				bool e3 = wallsList[rc2v(wall.row, wall.column)] == 0;
 				if(debug)
-					cout<<"vertical "<<wall.row<<" "<<wall.column<<" "<<e1<<" "<<e2<<" "<<e3<<endl;
+//					cout<<"vertical "<<wall.row<<" "<<wall.column<<" "<<e1<<" "<<e2<<" "<<e3<<endl;
 				return e1 && e2 && e3;
 			}
 		} else {
@@ -157,6 +159,7 @@ public:
 	//Removes/adds edges to account for the presence of a player.
 	void adjustForPlayer(int player) {
 
+
 		int i, j;
 		if (player == 1) {
 			i = row1;
@@ -166,10 +169,20 @@ public:
 			j = column2;
 		}
 
+		// [a] [b] [c]
+		// [h] [x] [d]
+		// [g] [f] [e]
+
 		bool e1 = (checkEdge(rc2v(i, j - 1), rc2v(i, j))); //h-x
+
 		bool e2 = (checkEdge(rc2v(i, j), rc2v(i, j + 1))); //x-d
+
 		bool e3 = (checkEdge(rc2v(i - 1, j), rc2v(i, j))); //b-x
+
 		bool e4 = (checkEdge(rc2v(i, j), rc2v(i + 1, j))); //f-x
+
+
+
 
 		if (e1 && e2) {
 			removeEdge(rc2v(i, j - 1), rc2v(i, j));
@@ -338,6 +351,11 @@ public:
 		}
 	}
 
+	BGraph(){
+		int rows;
+			columns, walls, me, row1, column1, walls1, row2, column2, walls2, time = 0;
+	}
+
 	//Copy Constructor
 	BGraph(const BGraph & obj) {
 		rows = obj.rows;
@@ -358,6 +376,14 @@ public:
 		wallsList = obj.wallsList;
 		edges = obj.edges;
 	}
+
+
+	bool operator==(const BGraph& other) {
+	  return row1 == other.row1 && column1 == other.column1 && walls1 == other.walls1
+			  && row2 == other.row2 && column2 == other.column2 && walls2 == other.walls2
+			  && wallsList == other.wallsList;
+	}
+
 };
 
 //===========================================================================================
@@ -377,16 +403,16 @@ struct Board {
 	vector<Wall> walls;
 };
 
-int getVNum(int row, int column, Board board) {
-	return board.columns * (row - 1) + column;
-}
+//int getVNum(int row, int column, Board board) {
+//	return board.columns * (row - 1) + column;
+//}
 
-pair<int, int> getRC(int v, Board board) {
-	pair<int, int> loc;
-	loc.first = v / board.columns + 1;
-	loc.second = v % board.columns;
-	return loc;
-}
+//pair<int, int> getRC(int v, Board board) {
+//	pair<int, int> loc;
+//	loc.first = v / board.columns + 1;
+//	loc.second = v % board.columns;
+//	return loc;
+//}
 
 //player specifies whose turn it is. Because the graph depends on the *opponent* of the *current* player.
 BGraph boardToGraph(Board board, int player) {
@@ -471,18 +497,18 @@ int pathfinder(BGraph bGraph, int player, int mode) {
 
 	bool debug = bGraph.wallsList[18] == 1 && player == 1;
 
-	if (debug) {
-		for (int i = 1; i < 19; i++) {
-			cout << endl << i << " -> ";
-			set<int>::iterator iter;
-			set<int> neighbours = bGraph.edges[i];
-			for (iter = neighbours.begin(); iter != neighbours.end(); ++iter) {
-				int n = *iter;
-				cout << n << ",";
-			}
-		}
-		cout<<endl;
-	}
+//	if (debug) {
+//		for (int i = 1; i < 19; i++) {
+//			cout << endl << i << " -> ";
+//			set<int>::iterator iter;
+//			set<int> neighbours = bGraph.edges[i];
+//			for (iter = neighbours.begin(); iter != neighbours.end(); ++iter) {
+//				int n = *iter;
+//				cout << n << ",";
+//			}
+//		}
+//		cout<<endl;
+//	}
 
 	int vertex, dest;
 	if (player == 1) {
@@ -496,10 +522,10 @@ int pathfinder(BGraph bGraph, int player, int mode) {
 	int shortestPath = INT_MAX;
 	bool found = false;
 	for (int i = dest; i < dest + bGraph.columns; i++) {
-		if(debug)
-			cout<<"Trying to go from "<<vertex<<" to "<<i<<endl;
+//		if(debug)
+//			cout<<"Trying to go from "<<vertex<<" to "<<i<<endl;
 		int distance = bGraph.bfs(vertex, i);
-		if(debug) cout<<distance<<endl;
+//		if(debug) cout<<distance<<endl;
 		if (distance != -1) {
 			found = true;
 			if (mode == 1) {
@@ -510,8 +536,8 @@ int pathfinder(BGraph bGraph, int player, int mode) {
 		}
 	}
 	if (mode == 1) {
-		if(debug)
-			cout<<"\n-------------\n"<<found<<endl;
+//		if(debug)
+//			cout<<"\n-------------\n"<<found<<endl;
 		return (int) (found == true);
 	}
 	return shortestPath;
@@ -538,10 +564,12 @@ vector<Move> movegen(BGraph bGraph, int player) {
 	BGraph playerGraph = bGraph;
 
 	playerGraph.adjustForPlayer(opponent);
+
 	opponentGraph.adjustForPlayer(player);
 
 	vector<Move> moves;
 	moves.reserve(2 * bGraph.rows * bGraph.columns + 4);
+
 
 	//Moves for moving the pawn.
 	set<int> neighbours = playerGraph.edges[v];
@@ -550,6 +578,8 @@ vector<Move> movegen(BGraph bGraph, int player) {
 		int n = *iter;
 		moves.push_back(Move(0, bGraph.v2rc(n).first, bGraph.v2rc(n).second, player));
 	}
+
+
 
 	//Moves for the walls.
 	for(int i=1; i<bGraph.wallsList.size(); i++){
@@ -579,7 +609,6 @@ vector<Move> movegen(BGraph bGraph, int player) {
 //					}
 //				}
 				if(pathfinder(t_pGraph, player, 1)==1 && pathfinder(t_oGraph, opponent, 1) == 1){
-					cout<<"Path exists\n";
 					Move hMove = Move(1, hWall.row, hWall.column, player);
 					moves.push_back(hMove);
 				}
@@ -602,6 +631,9 @@ vector<Move> movegen(BGraph bGraph, int player) {
 		}
 	}
 
+	progress = progress + moves.size();
+	cout<<progress<<endl;
+
 	return moves;
 }
 
@@ -621,6 +653,7 @@ float utility(BGraph bGraph) {
 }
 
 BGraph applyMove(BGraph bGraph, Move move) {
+
 
 	if (move.type == 0) {
 		if (move.player == 1) {
@@ -644,14 +677,14 @@ BGraph applyMove(BGraph bGraph, Move move) {
 
 //================================================================================================================================================
 
-Move minimax(BGraph bGraph) {
-	//Do your thing
-}
 
-int inf, neginf, d;
+
+int inf = 99999;
+int neginf = -99999;
+int d;
 // int player,opp;
 bool finish(BGraph board) {
-	return ((board.row1 == board.rows) && (board.row2 == 1));
+	return ((board.row2 == board.rows) && (board.row1 == 1));
 }
 struct pv {
 	BGraph state;
@@ -666,7 +699,6 @@ void reorder(BGraph state, vector<Move> moves, vector<pv> path, int a)        //
 	} else if (state == path[a - 1].state) {
 		moves.insert(moves.begin(), path[a].mov);
 	}
-
 }
 
 /*void reorder(bGraph state,vector<Move> moves,vector<pv> path,int d)
@@ -677,9 +709,8 @@ void reorder(BGraph state, vector<Move> moves, vector<pv> path, int a)        //
  {Move t=moves[k];
  moves.erase(moves.begin()+k);
  moves.insert(moves.begin(),t);}
-
-
  }} */
+
 vector<pv> NEGAMAX(BGraph node, int depth, int alpha, int beta, int color, vector<pv> path) {
 
 	int bestValue = neginf;
@@ -687,13 +718,22 @@ vector<pv> NEGAMAX(BGraph node, int depth, int alpha, int beta, int color, vecto
 	BGraph bestState;
 	vector<Move> movelist;
 	if (color == 1)
+	{
 		movelist = movegen(node, node.me);
-	else
+	}
+	else{
 		movelist = movegen(node, 3 - (node.me));
+	}
+
 	vector<pv> ans;
 	if (path.size() > (d - depth))
-		reorder(node, movelist, path, (d - depth));
-	for (int i = 0; i++; i < movelist.size()) {
+	reorder(node, movelist, path, (d - depth));
+
+
+	for (int i = 0; i < movelist.size(); i++) {
+
+
+
 		BGraph child = applyMove(node, movelist[i]);
 		if (finish(child) || depth == 1) {
 			int val = color * utility(child);
@@ -704,9 +744,11 @@ vector<pv> NEGAMAX(BGraph node, int depth, int alpha, int beta, int color, vecto
 			bestValue = max(bestValue, val);
 
 			alpha = max(alpha, val);
-			if (alpha >= beta)
+			if (alpha >= beta) {
+
 				break;
-		}
+			}
+			}
 
 		else {
 			vector<pv> p = NEGAMAX(child, depth - 1, -beta, -alpha, (-1) * color, path);
@@ -719,9 +761,11 @@ vector<pv> NEGAMAX(BGraph node, int depth, int alpha, int beta, int color, vecto
 			}
 			bestValue = max(bestValue, p[0].value);
 			alpha = max(alpha, p[0].value);
-			if (alpha >= beta)
+			if (alpha >= beta) {
+
 				break;
-		}
+			}
+			 }
 
 	}
 
@@ -730,123 +774,44 @@ vector<pv> NEGAMAX(BGraph node, int depth, int alpha, int beta, int color, vecto
 	edge.value = bestValue;
 	edge.state = bestState;
 	ans.insert(ans.begin(), edge);
+	//if(depth>1 && i>56) cout << "depth:"<<depth << endl;
 	return ans;
 }
 
 Move ITERATIVE_NEGAMAX(BGraph board) {
-	d = 1;vector<pv> path;
+	d = 1;
+	vector<pv> path;
 	Move m;
-	while(d<4)           //while time's left
+	while (d < 2)           //while time's left
 	{
-		path = NEGAMAX(board,d,neginf,inf,1,path);
+		path = NEGAMAX(board, d, neginf, inf, 1, path);
 		m = (path[0]).mov;
-		d = d+1;
+		m.movePrint();
+		d = d + 1;
 	}
+	cout << "iter-nega returned : ";
+	m.movePrint();
 	return m;
 }
-
-
-
-//
-//int inf, neginf;
-//int player, opp;
-//
-//bool finish(Board board) {
-//	return (board.row1 == board.rows) && (board.row2 == 1);
-//}
-//struct pv{
-//	Board state;
-//	Move mov;
-//	int value;
-//};
-//
-//void reorder(Board state, vector<Move> moves, vector<pv> path, int d) {
-//	for (int j = d; j++; j < path.size()) {
-//		for (int k = 0; k++; k < moves.size()) {
-//			Board temp = applyMove(state, moves[k]);
-//			if (temp == (path[j].state)) {
-//				Move t = moves[k];
-//				moves.erase(moves.begin() + k);
-//				moves.insert(moves.begin(), t);
-//			}
-//
-//		}
-//	}
-//}
-//
-//vector<pv> NEGAMAX(Board node, int depth, int alpha, int beta, int color, vector<pv> path) {
-//
-//	int bestValue = neginf;
-//	Move bestMove;
-//	Board bestState;
-//	vector<Move> movelist;
-//	if (color == 1)
-//		movelist = movegen(node, node.me);
-//	else
-//		movelist = movegen(node, 3 - (node.me));
-//	vector<pv> ans;
-//	reorder(node, movelist, path, depth);
-//	for (int i = 0; i++; i < movelist.size()) {
-//		Board child = applyMove(node, movelist[i]);
-//		if (finish(child) || depth == 1) {
-//			int val = utility(child);
-//			if (bestValue < val) {
-//				bestMove = movelist[i];
-//				bestState = child;
-//			}
-//			bestValue = max(bestValue, val);
-//
-//			alpha = max(alpha, val);
-//			if (alpha >= beta)
-//				break;
-//		} else {
-//			int gamma = (-1) * beta;
-//			int delta = (-1) * alpha;
-//			vector<pv> p = NEGAMAX(child, depth - 1, gamma, delta, (-1) * color, path);
-//			if (bestValue < p[0].value) {
-//				bestMove = movelist[i];
-//				ans = p;
-//				bestState = child;
-//			}
-//			bestValue = max(bestValue, p[0].value);
-//			alpha = max(alpha, p[0].value);
-//			if (alpha >= beta)
-//				break;
-//		}
-//	}
-//	pv edge;
-//	edge.mov = bestMove;
-//	edge.value = bestValue;
-//	edge.state = bestState;
-//	ans.push_back(edge);
-//	return ans;
-//}
-//
-//Move ITERATIVE_NEGAMAX(Board board) {
-//	int d = 1;
-//	vector<pv> path;
-//	Move m;
-//	int i = 2;
-//	while (i > 0) {           //while time's left
-//		path = NEGAMAX(board, d, neginf, inf, 1, path);
-//		m = (path[0]).mov;
-//		d = d + 1;
-//		i -= 1;
-//	}
-//	return m;
-//}
 
 //=================================================================================================================================================
 int main(){
 	BGraph bGraph = BGraph(9,9,10,60,1);
 	cout<<"Bgraph constructed"<<endl;
 
-	bGraph.addWall(Wall(false, 2, 5));
-	bGraph.addWall(Wall(false, 2, 6));
+//	bool test = bGraph.edges[0].find(14) != bGraph.edges[0].end();
+//	cout<<test<<endl;
+//	return test;
 
-	cout<<bGraph.edges.size()<<endl;
+	Move move = ITERATIVE_NEGAMAX(bGraph);
+	move.movePrint();
 
-//	for(int i=1; i<19; i++){
+//	bGraph.addWall(Wall(false, 2, 5));
+//	bGraph.addWall(Wall(false, 2, 6));
+
+//	cout<<bGraph.edges.size()<<endl;
+
+//	for(int i=0; i<19; i++){
 //		cout<<endl<<i<<" -> ";
 //		set<int>::iterator iter;
 //		set<int> neighbours = bGraph.edges[i];
@@ -857,151 +822,151 @@ int main(){
 //	}
 
 
-	vector<Move> moves = movegen(bGraph,1);
-	for(int i=0; i<moves.size(); i++){
-		moves[i].movePrint();
-	}
+//	vector<Move> moves = movegen(bGraph,1);
+//	for(int i=0; i<moves.size(); i++){
+//		moves[i].movePrint();
+//	}
 }
 
 
-int main2(int argc, char *argv[]) {
-	srand(time(NULL));
-	int sockfd = 0, n = 0;
-	char recvBuff[1024];
-	char sendBuff[1025];
-	struct sockaddr_in serv_addr;
-
-	if (argc != 3) {
-		printf("\n Usage: %s <ip of server> <port no> \n", argv[0]);
-		return 1;
-	}
-
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("\n Error : Could not create socket \n");
-		return 1;
-	}
-
-	memset(&serv_addr, '0', sizeof(serv_addr));
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(atoi(argv[2]));
-
-	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
-		printf("\n inet_pton error occured\n");
-		return 1;
-	}
-
-	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		printf("\n Error : Connect Failed \n");
-		return 1;
-	}
-
-//==================Game starts from here=====================================
-
-	cout << "Quoridor will start..." << endl;
-
-	memset(recvBuff, '0', sizeof(recvBuff));
-	n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
-	recvBuff[n] = 0;
-	sscanf(recvBuff, "%d %d %d %d %d", &player, &N, &M, &K, &time_left);
-
-	BGraph bGraph = BGraph(N, M, K, time_left, player);
-
-
-	cout << "Player " << player << endl;
-	cout << "Time " << time_left << endl;
-	cout << "Board size " << N << "x" << M << " :" << K << endl;
-	float TL;
-	int om, oro, oc;
-	int m, r, c;
-	int d = 3;
-	char s[100];
-	int x = 1;
-	if (player == 1) {
-
-		memset(sendBuff, '0', sizeof(sendBuff));
-		string temp;
-
-		//Get a move from player.
-//		cin>>m>>r>>c;
-
-		//This move had better have it's player set to the correct value.
-		Move move = minimax(bGraph);
-
-		bGraph = applyMove(bGraph, move);
-
-		m = move.type;
-		r = move.row;
-		c = move.column;
-
-		snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", m, r, c);
-		write(sockfd, sendBuff, strlen(sendBuff));
-
-		memset(recvBuff, '0', sizeof(recvBuff));
-		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
-		recvBuff[n] = 0;
-		sscanf(recvBuff, "%f %d", &TL, &d);
-		cout << TL << " " << d << endl;
-		if (d == 1) {
-			cout << "You win!! Yayee!! :D ";
-			x = 0;
-		} else if (d == 2) {
-			cout << "Loser :P ";
-			x = 0;
-		}
-	}
-
-	while (x) {
-		memset(recvBuff, '0', sizeof(recvBuff));
-
-		//Get move of opponent, and game status.
-		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
-		recvBuff[n] = 0;
-		sscanf(recvBuff, "%d %d %d %d", &om, &oro, &oc, &d);
-
-		Move omove = Move(om, oro, oc, 1);
-		omove.player = (bGraph.me == 1) ? 2 : 1;
-
-		bGraph = applyMove(bGraph, omove);
-
-		cout << om << " " << oro << " " << oc << " " << d << endl;
-		if (d == 1) {
-			cout << "You win!! Yayee!! :D ";
-			break;
-		} else if (d == 2) {
-			cout << "Loser :P ";
-			break;
-		}
-		memset(sendBuff, '0', sizeof(sendBuff));
-		string temp;
-
-		//Get a move from player.
-//		cin>>m>>r>>c;
-
-		Move move = minimax(bGraph);
-
-		bGraph = applyMove(bGraph, move);
-
-		m = move.type;
-		r = move.row;
-		c = move.column;
-
-		snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", m, r, c);
-		write(sockfd, sendBuff, strlen(sendBuff));
-
-		memset(recvBuff, '0', sizeof(recvBuff));
-		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
-		recvBuff[n] = 0;
-		sscanf(recvBuff, "%f %d", &TL, &d); //d=3 indicates game continues.. d=2 indicates lost game, d=1 means game won.
-		cout << TL << " " << d << endl;
-		if (d == 1) {
-			cout << "You win!! Yayee!! :D ";
-			break;
-		} else if (d == 2) {
-			cout << "Loser :P ";
-			break;
-		}
-	}
-	cout << endl << "The End" << endl;
-	return 0;
-}
+//int main2(int argc, char *argv[]) {
+//	srand(time(NULL));
+//	int sockfd = 0, n = 0;
+//	char recvBuff[1024];
+//	char sendBuff[1025];
+//	struct sockaddr_in serv_addr;
+//
+//	if (argc != 3) {
+//		printf("\n Usage: %s <ip of server> <port no> \n", argv[0]);
+//		return 1;
+//	}
+//
+//	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+//		printf("\n Error : Could not create socket \n");
+//		return 1;
+//	}
+//
+//	memset(&serv_addr, '0', sizeof(serv_addr));
+//
+//	serv_addr.sin_family = AF_INET;
+//	serv_addr.sin_port = htons(atoi(argv[2]));
+//
+//	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
+//		printf("\n inet_pton error occured\n");
+//		return 1;
+//	}
+//
+//	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+//		printf("\n Error : Connect Failed \n");
+//		return 1;
+//	}
+//
+////==================Game starts from here=====================================
+//
+//	cout << "Quoridor will start..." << endl;
+//
+//	memset(recvBuff, '0', sizeof(recvBuff));
+//	n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
+//	recvBuff[n] = 0;
+//	sscanf(recvBuff, "%d %d %d %d %d", &player, &N, &M, &K, &time_left);
+//
+//	BGraph bGraph = BGraph(N, M, K, time_left, player);
+//
+//
+//	cout << "Player " << player << endl;
+//	cout << "Time " << time_left << endl;
+//	cout << "Board size " << N << "x" << M << " :" << K << endl;
+//	float TL;
+//	int om, oro, oc;
+//	int m, r, c;
+//	int d = 3;
+//	char s[100];
+//	int x = 1;
+//	if (player == 1) {
+//
+//		memset(sendBuff, '0', sizeof(sendBuff));
+//		string temp;
+//
+//		//Get a move from player.
+////		cin>>m>>r>>c;
+//
+//		//This move had better have it's player set to the correct value.
+//		Move move = minimax(bGraph);
+//
+//		bGraph = applyMove(bGraph, move);
+//
+//		m = move.type;
+//		r = move.row;
+//		c = move.column;
+//
+//		snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", m, r, c);
+//		write(sockfd, sendBuff, strlen(sendBuff));
+//
+//		memset(recvBuff, '0', sizeof(recvBuff));
+//		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
+//		recvBuff[n] = 0;
+//		sscanf(recvBuff, "%f %d", &TL, &d);
+//		cout << TL << " " << d << endl;
+//		if (d == 1) {
+//			cout << "You win!! Yayee!! :D ";
+//			x = 0;
+//		} else if (d == 2) {
+//			cout << "Loser :P ";
+//			x = 0;
+//		}
+//	}
+//
+//	while (x) {
+//		memset(recvBuff, '0', sizeof(recvBuff));
+//
+//		//Get move of opponent, and game status.
+//		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
+//		recvBuff[n] = 0;
+//		sscanf(recvBuff, "%d %d %d %d", &om, &oro, &oc, &d);
+//
+//		Move omove = Move(om, oro, oc, 1);
+//		omove.player = (bGraph.me == 1) ? 2 : 1;
+//
+//		bGraph = applyMove(bGraph, omove);
+//
+//		cout << om << " " << oro << " " << oc << " " << d << endl;
+//		if (d == 1) {
+//			cout << "You win!! Yayee!! :D ";
+//			break;
+//		} else if (d == 2) {
+//			cout << "Loser :P ";
+//			break;
+//		}
+//		memset(sendBuff, '0', sizeof(sendBuff));
+//		string temp;
+//
+//		//Get a move from player.
+////		cin>>m>>r>>c;
+//
+//		Move move = minimax(bGraph);
+//
+//		bGraph = applyMove(bGraph, move);
+//
+//		m = move.type;
+//		r = move.row;
+//		c = move.column;
+//
+//		snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", m, r, c);
+//		write(sockfd, sendBuff, strlen(sendBuff));
+//
+//		memset(recvBuff, '0', sizeof(recvBuff));
+//		n = read(sockfd, recvBuff, sizeof(recvBuff) - 1);
+//		recvBuff[n] = 0;
+//		sscanf(recvBuff, "%f %d", &TL, &d); //d=3 indicates game continues.. d=2 indicates lost game, d=1 means game won.
+//		cout << TL << " " << d << endl;
+//		if (d == 1) {
+//			cout << "You win!! Yayee!! :D ";
+//			break;
+//		} else if (d == 2) {
+//			cout << "Loser :P ";
+//			break;
+//		}
+//	}
+//	cout << endl << "The End" << endl;
+//	return 0;
+//}
